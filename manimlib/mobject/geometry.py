@@ -94,8 +94,8 @@ class TipableVMobject(VMobject):
         Returns a tip that has been stylistically configured,
         but has not yet been given a position in space.
         """
-        config = dict()
-        config.update(self.tip_config)
+        config = {}
+        config |= self.tip_config
         config.update(kwargs)
         return ArrowTip(**config)
 
@@ -185,10 +185,7 @@ class TipableVMobject(VMobject):
         return self.get_points()[-2]
 
     def get_end(self) -> Vect3:
-        if self.has_tip():
-            return self.tip.get_start()
-        else:
-            return VMobject.get_end(self)
+        return self.tip.get_start() if self.has_tip() else VMobject.get_end(self)
 
     def get_start(self) -> Vect3:
         if self.has_start_tip():

@@ -12,7 +12,7 @@ def merge_dicts_recursively(*dicts):
 
     When values are dictionaries, it is applied recursively
     """
-    result = dict()
+    result = {}
     all_items = it.chain(*[d.items() for d in dicts])
     for key, value in all_items:
         if key in result and isinstance(result[key], dict) and isinstance(value, dict):
@@ -40,9 +40,11 @@ def dict_eq(d1, d2):
         value2 = d2[key]
         if type(value1) != type(value2):
             return False
-        if type(d1[key]) == np.ndarray:
-            if any(d1[key] != d2[key]):
-                return False
-        elif d1[key] != d2[key]:
+        if (
+            type(value1) == np.ndarray
+            and any(value1 != value2)
+            or type(value1) != np.ndarray
+            and value1 != value2
+        ):
             return False
     return True

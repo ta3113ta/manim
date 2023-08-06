@@ -148,7 +148,4 @@ def hash_obj(obj: object) -> int:
     if isinstance(obj, (tuple, list)):
         return hash(tuple(hash_obj(e) for e in obj))
 
-    if isinstance(obj, Color):
-        return hash(obj.get_rgb())
-
-    return hash(obj)
+    return hash(obj.get_rgb()) if isinstance(obj, Color) else hash(obj)

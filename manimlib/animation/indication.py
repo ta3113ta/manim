@@ -217,7 +217,7 @@ class VShowPassingFlash(Animation):
     def begin(self) -> None:
         # Compute an array of stroke widths for each submobject
         # which tapers out at either end
-        self.submob_to_widths = dict()
+        self.submob_to_widths = {}
         for sm in self.mobject.get_family():
             widths = sm.get_stroke_widths()
             self.submob_to_widths[hash(sm)] = np.array([

@@ -191,7 +191,7 @@ def approx_smooth_quadratic_bezier_handles(
     if len(points) == 2:
         return midpoint(*points)
     smooth_to_right, smooth_to_left = [
-        0.25 * ps[0:-2] + ps[1:-1] - 0.25 * ps[2:]
+        0.25 * ps[:-2] + ps[1:-1] - 0.25 * ps[2:]
         for ps in (points, points[::-1])
     ]
     if np.isclose(points[0], points[-1]).all():
@@ -299,7 +299,7 @@ def get_smooth_cubic_bezier_handle_points(
             handle_pairs[:, i] = closed_curve_solve_func(b[:, i])
         else:
             handle_pairs[:, i] = solve_func(b[:, i])
-    return handle_pairs[0::2], handle_pairs[1::2]
+    return handle_pairs[::2], handle_pairs[1::2]
 
 
 def diag_to_matrix(
@@ -367,8 +367,8 @@ def get_quadratic_approximation_of_cubic(
         ti_bounds.append(ti)
     ti_min, ti_max = ti_bounds
     np.seterr(**settings)
-    ti_min_in_range = has_infl & (0 < ti_min) & (ti_min < 1)
-    ti_max_in_range = has_infl & (0 < ti_max) & (ti_max < 1)
+    ti_min_in_range = has_infl & (ti_min > 0) & (ti_min < 1)
+    ti_max_in_range = has_infl & (ti_max > 0) & (ti_max < 1)
 
     # Choose a value of t which starts at 0.5,
     # but is updated to one of the inflection points
@@ -392,7 +392,7 @@ def get_quadratic_approximation_of_cubic(
 
     m, n = np.shape(a0)
     result = np.zeros((5 * m, n))
-    result[0::5] = a0
+    result[::5] = a0
     result[1::5] = i0
     result[2::5] = mid
     result[3::5] = i1

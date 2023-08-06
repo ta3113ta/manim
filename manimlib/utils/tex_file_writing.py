@@ -74,12 +74,10 @@ def tex_content_to_svg_file(
         "\\end{document}"
     )) + "\n"
 
-    svg_file = os.path.join(
-        get_tex_dir(), hash_string(full_tex) + ".svg"
-    )
+    svg_file = os.path.join(get_tex_dir(), f"{hash_string(full_tex)}.svg")
     if not os.path.exists(svg_file):
         # If svg doesn't exist, create it
-        with display_during_execution("Writing " + short_tex):
+        with display_during_execution(f"Writing {short_tex}"):
             create_tex_svg(full_tex, svg_file, compiler)
     return svg_file
 
@@ -98,7 +96,7 @@ def create_tex_svg(full_tex: str, svg_file: str, compiler: str) -> None:
 
     # Write tex file
     root, _ = os.path.splitext(svg_file)
-    with open(root + ".tex", "w", encoding="utf-8") as tex_file:
+    with open(f"{root}.tex", "w", encoding="utf-8") as tex_file:
         tex_file.write(full_tex)
 
     # tex to dvi
@@ -115,9 +113,10 @@ def create_tex_svg(full_tex: str, svg_file: str, compiler: str) -> None:
             "LaTeX Error!  Not a worry, it happens to the best of us."
         )
         error_str = ""
-        with open(root + ".log", "r", encoding="utf-8") as log_file:
-            error_match_obj = re.search(r"(?<=\n! ).*\n.*\n", log_file.read())
-            if error_match_obj:
+        with open(f"{root}.log", "r", encoding="utf-8") as log_file:
+            if error_match_obj := re.search(
+                r"(?<=\n! ).*\n.*\n", log_file.read()
+            ):
                 error_str = error_match_obj.group()
                 log.debug(
                     f"The error could be:\n`{error_str}`",
@@ -152,7 +151,7 @@ def display_during_execution(message: str):
     to_print = message.replace("\n", " ")
     max_characters = os.get_terminal_size().columns - 1
     if len(to_print) > max_characters:
-        to_print = to_print[:max_characters - 3] + "..."
+        to_print = f"{to_print[:max_characters - 3]}..."
     try:
         print(to_print, end="\r")
         yield

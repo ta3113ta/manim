@@ -342,17 +342,16 @@ class Scene(object):
             mobject.update(dt)
 
     def should_update_mobjects(self) -> bool:
-        return self.always_update_mobjects or any([
-            len(mob.get_family_updaters()) > 0
-            for mob in self.mobjects
-        ])
+        return self.always_update_mobjects or any(
+            len(mob.get_family_updaters()) > 0 for mob in self.mobjects
+        )
 
     def has_time_based_updaters(self) -> bool:
-        return any([
+        return any(
             sm.has_time_based_updater()
             for mob in self.mobjects()
             for sm in mob.get_family()
-        ])
+        )
 
     # Related to time
 
@@ -371,11 +370,9 @@ class Scene(object):
         families = [m.get_family() for m in mobjects]
 
         def is_top_level(mobject):
-            num_families = sum([
-                (mobject in family)
-                for family in families
-            ])
+            num_families = sum(mobject in family for family in families)
             return num_families == 1
+
         return list(filter(is_top_level, mobjects))
 
     def get_mobject_family_members(self) -> list[Mobject]:
@@ -492,10 +489,14 @@ class Scene(object):
         """
         if search_set is None:
             search_set = self.mobjects
-        for mobject in reversed(search_set):
-            if mobject.is_point_touching(point, buff=buff):
-                return mobject
-        return None
+        return next(
+            (
+                mobject
+                for mobject in reversed(search_set)
+                if mobject.is_point_touching(point, buff=buff)
+            ),
+            None,
+        )
 
     def get_group(self, *mobjects):
         if all(isinstance(m, VMobject) for m in mobjects):
@@ -574,8 +575,7 @@ class Scene(object):
         description = f"{self.num_plays} {animations[0]}"
         if len(animations) > 1:
             description += ", etc."
-        time_progression = self.get_time_progression(run_time, desc=description)
-        return time_progression
+        return self.get_time_progression(run_time, desc=description)
 
     def get_wait_time_progression(
         self,
@@ -651,7 +651,7 @@ class Scene(object):
         rate_func: Callable[[float], float] | None = None,
         lag_ratio: float | None = None,
     ) -> None:
-        if len(proto_animations) == 0:
+        if not proto_animations:
             log.warning("Called Scene.play with no animations")
             return
         animations = list(map(prepare_animation, proto_animations))
@@ -815,13 +815,13 @@ class Scene(object):
         self.restore_state(self.checkpoint_states[key])
 
     def clear_checkpoints(self):
-        self.checkpoint_states = dict()
+        self.checkpoint_states = {}
 
     def save_mobject_to_file(self, mobject: Mobject, file_path: str | None = None) -> None:
         if file_path is None:
             file_path = self.file_writer.get_saved_mobject_path(mobject)
-            if file_path is None:
-                return
+        if file_path is None:
+            return
         mobject.save_to_file(file_path)
 
     def load_mobject(self, file_name):
@@ -979,7 +979,7 @@ class SceneState():
             for mob in ignore:
                 self.mobjects_to_copies.pop(mob, None)
 
-        last_m2c = scene.undo_stack[-1].mobjects_to_copies if scene.undo_stack else dict()
+        last_m2c = scene.undo_stack[-1].mobjects_to_copies if scene.undo_stack else {}
         for mob in self.mobjects_to_copies:
             # If it hasn't changed since the last state, just point to the
             # same copy as before

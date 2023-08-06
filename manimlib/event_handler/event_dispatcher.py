@@ -78,7 +78,7 @@ class EventDispatcher(object):
         return propagate_event
 
     def get_listners_count(self) -> int:
-        return sum([len(value) for key, value in self.event_listners.items()])
+        return sum(len(value) for key, value in self.event_listners.items())
 
     def get_mouse_point(self) -> np.ndarray:
         return self.mouse_point

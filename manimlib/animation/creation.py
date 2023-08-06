@@ -166,9 +166,7 @@ class Write(DrawBorderThenFill):
         return run_time
 
     def compute_lag_ratio(self, family_size: int, lag_ratio: float):
-        if lag_ratio < 0:
-            return min(4.0 / (family_size + 1.0), 0.2)
-        return lag_ratio
+        return min(4.0 / (family_size + 1.0), 0.2) if lag_ratio < 0 else lag_ratio
 
 
 class ShowIncreasingSubsets(Animation):

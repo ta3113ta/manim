@@ -21,8 +21,8 @@ if TYPE_CHECKING:
     from moderngl.framebuffer import Framebuffer
 
 
-ID_TO_TEXTURE: dict[int, moderngl.Texture] = dict()
-PROGRAM_UNIFORM_MIRRORS: dict[int, dict[str, float | tuple]] = dict()
+ID_TO_TEXTURE: dict[int, moderngl.Texture] = {}
+PROGRAM_UNIFORM_MIRRORS: dict[int, dict[str, float | tuple]] = {}
 
 
 @lru_cache()
@@ -80,7 +80,7 @@ def set_program_uniform(
 
     pid = id(program)
     if pid not in PROGRAM_UNIFORM_MIRRORS:
-        PROGRAM_UNIFORM_MIRRORS[pid] = dict()
+        PROGRAM_UNIFORM_MIRRORS[pid] = {}
     uniform_mirror = PROGRAM_UNIFORM_MIRRORS[pid]
 
     if type(value) is np.ndarray and value.ndim > 0:

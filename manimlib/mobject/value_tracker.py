@@ -36,9 +36,7 @@ class ValueTracker(Mobject):
 
     def get_value(self) -> float | complex | np.ndarray:
         result = self.uniforms["value"]
-        if len(result) == 1:
-            return result[0]
-        return result
+        return result[0] if len(result) == 1 else result
 
     def set_value(self, value: float | complex | np.ndarray) -> Self:
         self.uniforms["value"][:] = value

@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 
 def print_family(mobject: Mobject, n_tabs: int = 0) -> None:
     """For debugging purposes"""
-    log.debug("\t" * n_tabs + str(mobject) + " " + str(id(mobject)))
+    log.debug("\t" * n_tabs + str(mobject) + " " + id(mobject))
     for submob in mobject.submobjects:
         print_family(submob, n_tabs + 1)
 

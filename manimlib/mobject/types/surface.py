@@ -115,7 +115,7 @@ class Surface(Mobject):
             return self.triangle_indices
         index_grid = np.arange(nu * nv).reshape((nu, nv))
         indices = np.zeros(6 * (nu - 1) * (nv - 1), dtype=int)
-        indices[0::6] = index_grid[:-1, :-1].flatten()  # Top left
+        indices[::6] = index_grid[:-1, :-1].flatten()
         indices[1::6] = index_grid[+1:, :-1].flatten()  # Bottom left
         indices[2::6] = index_grid[:-1, +1:].flatten()  # Top right
         indices[3::6] = index_grid[:-1, +1:].flatten()  # Top right

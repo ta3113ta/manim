@@ -90,10 +90,7 @@ class NumberLine(Line):
             self.add_numbers(excluding=self.numbers_to_exclude)
 
     def get_tick_range(self) -> np.ndarray:
-        if self.include_tip:
-            x_max = self.x_max
-        else:
-            x_max = self.x_max + self.x_step
+        x_max = self.x_max if self.include_tip else self.x_max + self.x_step
         return np.arange(self.x_min, x_max, self.x_step)
 
     def add_ticks(self) -> None:

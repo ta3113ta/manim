@@ -100,10 +100,7 @@ class Camera(object):
 
     def use_window_fbo(self, use: bool = True):
         assert(self.window is not None)
-        if use:
-            self.fbo = self.window_fbo
-        else:
-            self.fbo = self.fbo_for_files
+        self.fbo = self.window_fbo if use else self.fbo_for_files
 
     # Methods associated with the frame buffer
     def get_fbo(

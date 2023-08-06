@@ -35,7 +35,7 @@ class Broadcast(LaggedStart):
         self.color = color
 
         circles = VGroup()
-        for x in range(n_circles):
+        for _ in range(n_circles):
             circle = Circle(
                 radius=big_radius,
                 stroke_color=BLACK,
