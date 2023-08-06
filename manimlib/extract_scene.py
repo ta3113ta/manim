@@ -21,9 +21,7 @@ def is_child_scene(obj, module):
         return False
     if obj == Scene:
         return False
-    if not obj.__module__.startswith(module.__name__):
-        return False
-    return True
+    return bool(obj.__module__.startswith(module.__name__))
 
 
 def prompt_user_for_choice(scene_classes):
@@ -131,5 +129,4 @@ def main(config):
         return [BlankScene(**scene_config)]
 
     all_scene_classes = get_scene_classes_from_module(module)
-    scenes = get_scenes_to_render(all_scene_classes, scene_config, config)
-    return scenes
+    return get_scenes_to_render(all_scene_classes, scene_config, config)

@@ -53,19 +53,23 @@ class TransformMatchingParts(AnimationGroup):
 
         # Finally, account for mismatches
         for source_piece in self.source_pieces:
-            if any([source_piece in anim.mobject.get_family() for anim in self.anims]):
-                continue
-            self.anims.append(FadeOutToPoint(
-                source_piece, target.get_center(),
-                **self.anim_config
-            ))
+            if all(
+                source_piece not in anim.mobject.get_family()
+                for anim in self.anims
+            ):
+                self.anims.append(FadeOutToPoint(
+                    source_piece, target.get_center(),
+                    **self.anim_config
+                ))
         for target_piece in self.target_pieces:
-            if any([target_piece in anim.mobject.get_family() for anim in self.anims]):
-                continue
-            self.anims.append(FadeInFromPoint(
-                target_piece, source.get_center(),
-                **self.anim_config
-            ))
+            if all(
+                target_piece not in anim.mobject.get_family()
+                for anim in self.anims
+            ):
+                self.anims.append(FadeInFromPoint(
+                    target_piece, source.get_center(),
+                    **self.anim_config
+                ))
 
         super().__init__(
             *self.anims,
@@ -103,11 +107,11 @@ class TransformMatchingParts(AnimationGroup):
         chars1: list[Mobject],
         chars2: list[Mobject]
     ) -> list[tuple[Mobject, Mobject]]:
-        result = []
-        for char1, char2 in it.product(chars1, chars2):
-            if char1.has_same_shape_as(char2):
-                result.append((char1, char2))
-        return result
+        return [
+            (char1, char2)
+            for char1, char2 in it.product(chars1, chars2)
+            if char1.has_same_shape_as(char2)
+        ]
 
     def clean_up_from_scene(self, scene: Scene) -> None:
         super().clean_up_from_scene(scene)

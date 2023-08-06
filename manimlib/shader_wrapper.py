@@ -51,8 +51,8 @@ class ShaderWrapper(object):
         self.depth_test = depth_test
         self.render_primitive = render_primitive
 
-        self.program_uniform_mirror: UniformDict = dict()
-        self.bind_to_mobject_uniforms(mobject_uniforms or dict())
+        self.program_uniform_mirror: UniformDict = {}
+        self.bind_to_mobject_uniforms(mobject_uniforms or {})
 
         self.init_program_code()
         self.init_program()
@@ -171,7 +171,7 @@ class ShaderWrapper(object):
     # Adding data
 
     def combine_with(self, *shader_wrappers: ShaderWrapper) -> ShaderWrapper:
-        if len(shader_wrappers) > 0:
+        if shader_wrappers:
             data_list = [self.vert_data, *(sw.vert_data for sw in shader_wrappers)]
             indices_list = [self.vert_indices, *(sw.vert_indices for sw in shader_wrappers)]
             self.read_in(data_list, indices_list)

@@ -239,7 +239,7 @@ class StreamLines(VGroup):
             points = [point]
             total_arc_len = 0
             time = 0
-            for x in range(self.max_time_steps):
+            for _ in range(self.max_time_steps):
                 time += self.dt
                 last_point = points[-1]
                 new_point = last_point + self.dt * (self.point_func(last_point) - origin)

@@ -119,23 +119,20 @@ class SceneFileWriter(object):
     def get_resolution_directory(self) -> str:
         pixel_height = self.scene.camera.pixel_height
         fps = self.scene.camera.fps
-        return "{}p{}".format(
-            pixel_height, fps
-        )
+        return f"{pixel_height}p{fps}"
 
     # Directory getters
     def get_image_file_path(self) -> str:
         return self.image_file_path
 
     def get_next_partial_movie_path(self) -> str:
-        result = os.path.join(
+        return os.path.join(
             self.partial_movie_directory,
             "{:05}{}".format(
                 self.scene.num_plays,
                 self.movie_file_extension,
-            )
+            ),
         )
-        return result
 
     def get_movie_file_path(self) -> str:
         return self.movie_file_path
@@ -146,7 +143,7 @@ class SceneFileWriter(object):
     def get_saved_mobject_path(self, mobject: Mobject) -> str | None:
         directory = self.get_saved_mobject_directory()
         files = os.listdir(directory)
-        default_name = str(mobject) + "_0.mob"
+        default_name = f"{str(mobject)}_0.mob"
         index = 0
         while default_name in files:
             default_name = default_name.replace(str(index), str(index + 1))
@@ -166,11 +163,11 @@ class SceneFileWriter(object):
         else:
             user_name = input(f"Enter mobject file name (default is {default_name}): ")
             file_path = os.path.join(directory, user_name or default_name)
-            if os.path.exists(file_path) or os.path.exists(file_path + ".mob"):
+            if os.path.exists(file_path) or os.path.exists(f"{file_path}.mob"):
                 if input(f"{file_path} already exists. Overwrite (y/n)? ") != "y":
                     return
         if not file_path.endswith(".mob"):
-            file_path = file_path + ".mob"
+            file_path = f"{file_path}.mob"
         return file_path
 
     # Sound
@@ -253,7 +250,7 @@ class SceneFileWriter(object):
     def open_movie_pipe(self, file_path: str) -> None:
         stem, ext = os.path.splitext(file_path)
         self.final_file_path = file_path
-        self.temp_file_path = stem + "_temp" + ext
+        self.temp_file_path = f"{stem}_temp{ext}"
 
         fps = self.scene.camera.fps
         width, height = self.scene.camera.get_pixel_shape()
@@ -322,7 +319,7 @@ class SceneFileWriter(object):
             file = os.path.split(self.get_movie_file_path())[1]
         full_desc = f"{file} {sub_desc}"
         if len(full_desc) > desc_len:
-            full_desc = full_desc[:desc_len - 3] + "..."
+            full_desc = f"{full_desc[:desc_len - 3]}..."
         else:
             full_desc += " " * (desc_len - len(full_desc))
         self.progress_display.set_description(full_desc)
@@ -397,14 +394,14 @@ class SceneFileWriter(object):
     def add_sound_to_video(self) -> None:
         movie_file_path = self.get_movie_file_path()
         stem, ext = os.path.splitext(movie_file_path)
-        sound_file_path = stem + ".wav"
+        sound_file_path = f"{stem}.wav"
         # Makes sure sound file length will match video file
         self.add_audio_segment(AudioSegment.silent(0))
         self.audio_segment.export(
             sound_file_path,
             bitrate='312k',
         )
-        temp_file_path = stem + "_temp" + ext
+        temp_file_path = f"{stem}_temp{ext}"
         commands = [
             FFMPEG_BIN,
             "-i", movie_file_path,
@@ -470,10 +467,8 @@ class SceneFileWriter(object):
 
                 commands.append(file_path)
 
-                FNULL = open(os.devnull, 'w')
-                sp.call(commands, stdout=FNULL, stderr=sp.STDOUT)
-                FNULL.close()
-
+                with open(os.devnull, 'w') as FNULL:
+                    sp.call(commands, stdout=FNULL, stderr=sp.STDOUT)
         if self.quiet:
             sys.stdout.close()
             sys.stdout = curr_stdout

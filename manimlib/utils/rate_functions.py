@@ -18,7 +18,7 @@ def smooth(t: float) -> float:
     # Zero first and second derivatives at t=0 and t=1.
     # Equivalent to bezier([0, 0, 0, 1, 1, 1])
     s = 1 - t
-    return (t**3) * (10 * s * s + 5 * s * t + t * t)
+    return t**3 * (10 * s * s + 5 * s * t + t**2)
 
 
 def rush_into(t: float) -> float:
@@ -34,10 +34,7 @@ def slow_into(t: float) -> float:
 
 
 def double_smooth(t: float) -> float:
-    if t < 0.5:
-        return 0.5 * smooth(2 * t)
-    else:
-        return 0.5 * (1 + smooth(2 * t - 1))
+    return 0.5 * smooth(2 * t) if t < 0.5 else 0.5 * (1 + smooth(2 * t - 1))
 
 
 def there_and_back(t: float) -> float:

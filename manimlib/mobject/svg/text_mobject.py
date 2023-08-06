@@ -177,9 +177,7 @@ class MarkupText(StringMobject):
             self.alignment,
             self.line_width
         ))
-        svg_file = os.path.join(
-            get_text_dir(), hash_string(hash_content) + ".svg"
-        )
+        svg_file = os.path.join(get_text_dir(), f"{hash_string(hash_content)}.svg")
         if not os.path.exists(svg_file):
             self.markup_to_svg(content, svg_file)
         return svg_file
@@ -217,13 +215,13 @@ class MarkupText(StringMobject):
 
     @staticmethod
     def validate_markup_string(markup_str: str) -> None:
-        validate_error = manimpango.MarkupUtils.validate(markup_str)
-        if not validate_error:
+        if validate_error := manimpango.MarkupUtils.validate(markup_str):
+            raise ValueError(
+                f"Invalid markup string \"{markup_str}\"\n" + \
+                    f"{validate_error}"
+            )
+        else:
             return
-        raise ValueError(
-            f"Invalid markup string \"{markup_str}\"\n" + \
-            f"{validate_error}"
-        )
 
     # Toolkits
 
@@ -261,49 +259,47 @@ class MarkupText(StringMobject):
 
     @staticmethod
     def get_command_flag(match_obj: re.Match) -> int:
-        if match_obj.group("tag"):
-            if match_obj.group("close_slash"):
+        if match_obj["tag"]:
+            if match_obj["close_slash"]:
                 return -1
-            if not match_obj.group("elision_slash"):
+            if not match_obj["elision_slash"]:
                 return 1
         return 0
 
     @staticmethod
     def replace_for_content(match_obj: re.Match) -> str:
-        if match_obj.group("tag"):
+        if match_obj["tag"]:
             return ""
-        if match_obj.group("char"):
-            return MarkupText.escape_markup_char(match_obj.group("char"))
+        if match_obj["char"]:
+            return MarkupText.escape_markup_char(match_obj["char"])
         return match_obj.group()
 
     @staticmethod
     def replace_for_matching(match_obj: re.Match) -> str:
-        if match_obj.group("tag") or match_obj.group("passthrough"):
+        if match_obj["tag"] or match_obj["passthrough"]:
             return ""
-        if match_obj.group("entity"):
-            if match_obj.group("unicode"):
-                base = 10
-                if match_obj.group("hex"):
-                    base = 16
-                return chr(int(match_obj.group("content"), base))
-            return MarkupText.unescape_markup_char(match_obj.group("entity"))
+        if match_obj["entity"]:
+            if match_obj["unicode"]:
+                base = 16 if match_obj["hex"] else 10
+                return chr(int(match_obj["content"], base))
+            return MarkupText.unescape_markup_char(match_obj["entity"])
         return match_obj.group()
 
     @staticmethod
     def get_attr_dict_from_command_pair(
         open_command: re.Match, close_command: re.Match
     ) -> dict[str, str] | None:
-        pattern = r"""
+        tag_name = open_command["tag_name"]
+        if tag_name == "span":
+            pattern = r"""
             (?P<attr_name>\w+)
             \s*\=\s*
             (?P<quot>["'])(?P<attr_val>.*?)(?P=quot)
         """
-        tag_name = open_command.group("tag_name")
-        if tag_name == "span":
             return {
                 match_obj.group("attr_name"): match_obj.group("attr_val")
                 for match_obj in re.finditer(
-                    pattern, open_command.group("attr_list"), re.S | re.X
+                    pattern, open_command["attr_list"], re.S | re.X
                 )
             }
         return MarkupText.MARKUP_TAGS.get(tag_name, {})
@@ -380,7 +376,7 @@ class MarkupText(StringMobject):
         if self.disable_ligatures:
             global_attr_dict["font_features"] = "liga=0,dlig=0,clig=0,hlig=0"
 
-        global_attr_dict.update(self.global_config)
+        global_attr_dict |= self.global_config
         return tuple(
             self.get_command_string(
                 global_attr_dict,

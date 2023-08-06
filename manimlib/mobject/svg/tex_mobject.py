@@ -129,11 +129,9 @@ class Tex(StringMobject):
 
     @staticmethod
     def get_command_flag(match_obj: re.Match) -> int:
-        if match_obj.group("open"):
+        if match_obj["open"]:
             return 1
-        if match_obj.group("close"):
-            return -1
-        return 0
+        return -1 if match_obj["close"] else 0
 
     @staticmethod
     def replace_for_content(match_obj: re.Match) -> str:
@@ -141,17 +139,13 @@ class Tex(StringMobject):
 
     @staticmethod
     def replace_for_matching(match_obj: re.Match) -> str:
-        if match_obj.group("command"):
-            return match_obj.group()
-        return ""
+        return match_obj.group() if match_obj["command"] else ""
 
     @staticmethod
     def get_attr_dict_from_command_pair(
         open_command: re.Match, close_command: re.Match
     ) -> dict[str, str] | None:
-        if len(open_command.group()) >= 2:
-            return {}
-        return None
+        return {} if len(open_command.group()) >= 2 else None
 
     def get_configured_items(self) -> list[tuple[Span, dict[str, str]]]:
         return [
@@ -173,9 +167,7 @@ class Tex(StringMobject):
     ) -> str:
         if label_hex is None:
             return ""
-        if is_end:
-            return "}}"
-        return "{{" + Tex.get_color_command(label_hex)
+        return "}}" if is_end else "{{" + Tex.get_color_command(label_hex)
 
     def get_content_prefix_and_suffix(
         self, is_labelled: bool
@@ -253,10 +245,7 @@ class Tex(StringMobject):
 
         decimal_mobs = []
         for part in parts:
-            if "." in substr:
-                num_decimal_places = len(substr.split(".")[1])
-            else:
-                num_decimal_places = 0
+            num_decimal_places = len(substr.split(".")[1]) if "." in substr else 0
             decimal_mob = DecimalNumber(
                 float(value),
                 num_decimal_places=num_decimal_places,
@@ -273,9 +262,7 @@ class Tex(StringMobject):
             # is to ensure Tex.substr_to_path_count counts it correctly.
             self.string = self.string.replace(substr, R"\decimalmob", 1)
 
-        if replace_all:
-            return VGroup(*decimal_mobs)
-        return decimal_mobs[index]
+        return VGroup(*decimal_mobs) if replace_all else decimal_mobs[index]
 
 
 class TexText(Tex):

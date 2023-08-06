@@ -216,19 +216,15 @@ class CoordinateSystem(ABC):
     ) -> Vect3 | None:
         if hasattr(graph, "underlying_function"):
             return self.coords_to_point(x, graph.underlying_function(x))
-        else:
-            alpha = binary_search(
-                function=lambda a: self.point_to_coords(
-                    graph.quick_point_from_proportion(a)
-                )[0],
-                target=x,
-                lower_bound=self.x_range[0],
-                upper_bound=self.x_range[1],
-            )
-            if alpha is not None:
-                return graph.quick_point_from_proportion(alpha)
-            else:
-                return None
+        alpha = binary_search(
+            function=lambda a: self.point_to_coords(
+                graph.quick_point_from_proportion(a)
+            )[0],
+            target=x,
+            lower_bound=self.x_range[0],
+            upper_bound=self.x_range[1],
+        )
+        return graph.quick_point_from_proportion(alpha) if alpha is not None else None
 
     def i2gp(self, x: float, graph: ParametricCurve) -> Vect3 | None:
         """
@@ -288,8 +284,8 @@ class CoordinateSystem(ABC):
                 if abs(pt[0]) < max_x and abs(pt[1]) < max_y:
                     x = x0
                     break
-            if x is None:
-                x = self.x_range[1]
+        if x is None:
+            x = self.x_range[1]
 
         point = self.input_to_graph_point(x, graph)
         angle = self.angle_of_tangent(x, graph)
@@ -470,10 +466,7 @@ class Axes(VGroup, CoordinateSystem):
         )
 
     def point_to_coords(self, point: Vect3 | Vect3Array) -> tuple[float | VectN, ...]:
-        return tuple([
-            axis.point_to_number(point)
-            for axis in self.get_axes()
-        ])
+        return tuple(axis.point_to_number(point) for axis in self.get_axes())
 
     def get_axes(self) -> VGroup:
         return self.axes

@@ -383,9 +383,7 @@ class VMobject(Mobject):
         return data["stroke_rgba"][0, 3]
 
     def get_color(self) -> str:
-        if self.has_fill():
-            return self.get_fill_color()
-        return self.get_stroke_color()
+        return self.get_fill_color() if self.has_fill() else self.get_stroke_color()
 
     def get_anti_alias_width(self):
         return self.uniforms["anti_alias_width"]
@@ -457,7 +455,7 @@ class VMobject(Mobject):
     ) -> Self:
         assert(len(anchors) == len(handles) + 1)
         points = resize_array(self.get_points(), 2 * len(anchors) - 1)
-        points[0::2] = anchors
+        points[::2] = anchors
         points[1::2] = handles
         self.set_points(points)
         return self
@@ -609,9 +607,7 @@ class VMobject(Mobject):
     def subdivide_intersections(self, recurse: bool = True, n_subdivisions: int = 1) -> Self:
         path = self.get_anchors()
         def tuple_to_subdivisions(b0, b1, b2):
-            if line_intersects_path(b0, b1, path):
-                return n_subdivisions
-            return 0
+            return n_subdivisions if line_intersects_path(b0, b1, path) else 0
 
         self.subdivide_curves_by_condition(tuple_to_subdivisions, recurse)
         return self
@@ -641,21 +637,21 @@ class VMobject(Mobject):
         return bool((dots > 1 - 1e-3).all())
 
     def change_anchor_mode(self, mode: str) -> Self:
-        assert(mode in ("jagged", "approx_smooth", "true_smooth"))
+        assert mode in {"jagged", "approx_smooth", "true_smooth"}
         subpaths = self.get_subpaths()
         self.clear_points()
         for subpath in subpaths:
             anchors = subpath[::2]
             new_subpath = np.array(subpath)
-            if mode == "jagged":
-                new_subpath[1::2] = 0.5 * (anchors[:-1] + anchors[1:])
-            elif mode == "approx_smooth":
+            if mode == "approx_smooth":
                 new_subpath[1::2] = approx_smooth_quadratic_bezier_handles(anchors)
+            elif mode == "jagged":
+                new_subpath[1::2] = 0.5 * (anchors[:-1] + anchors[1:])
             elif mode == "true_smooth":
                 new_subpath = smooth_quadratic_path(anchors)
             # Shift any handles which ended up on top of
             # the previous anchor
-            a0 = new_subpath[0:-1:2]
+            a0 = new_subpath[:-1:2]
             h = new_subpath[1::2]
             a1 = new_subpath[2::2]
             false_ends = np.equal(a0, h).all(1)
@@ -717,7 +713,7 @@ class VMobject(Mobject):
 
     def get_subpath_end_indices_from_points(self, points: Vect3Array) -> np.ndarray:
         atol = self.tolerance_for_point_equality
-        a0, h, a1 = points[0:-1:2], points[1::2], points[2::2]
+        a0, h, a1 = points[:-1:2], points[1::2], points[2::2]
         # An anchor point is considered the end of a path
         # if its following handle is sitting on top of it.
         # To disambiguate this from cases with many null
@@ -795,10 +791,10 @@ class VMobject(Mobject):
         for any i in range(0, len(anchors1))
         """
         points = self.get_points()
-        return [points[0:-1:2], points[1::2], points[2::2]]
+        return [points[:-1:2], points[1::2], points[2::2]]
 
     def get_start_anchors(self) -> Vect3Array:
-        return self.get_points()[0:-1:2]
+        return self.get_points()[:-1:2]
 
     def get_end_anchors(self) -> Vect3:
         return self.get_points()[2::2]
@@ -1035,7 +1031,7 @@ class VMobject(Mobject):
         else:
             low_tup = partial_quadratic_bezier_points(vm_points[i1:i2], lower_residue, 1)
             high_tup = partial_quadratic_bezier_points(vm_points[i3:i4], 0, upper_residue)
-            new_points[0:i1] = low_tup[0]
+            new_points[:i1] = low_tup[0]
             new_points[i1:i2] = low_tup
             # Keep new_points i2:i3 as they are
             new_points[i3:i4] = high_tup
@@ -1096,7 +1092,7 @@ class VMobject(Mobject):
             points = np.dot(points, z_to_vector(normal_vector))
 
 
-        v01s = points[1::2] - points[0:-1:2]
+        v01s = points[1::2] - points[:-1:2]
         v12s = points[2::2] - points[1::2]
         curve_orientations = np.sign(cross2d(v01s, v12s))
 
@@ -1104,10 +1100,7 @@ class VMobject(Mobject):
 
         # These are the vertices to which we'll apply a polygon triangulation
         indices = np.arange(len(points), dtype=int)
-        inner_vert_indices = np.hstack([
-            indices[0::2],
-            indices[1::2][concave_parts],
-        ])
+        inner_vert_indices = np.hstack([indices[::2], indices[1::2][concave_parts]])
         inner_vert_indices.sort()
         # Even indices correspond to anchors, and `end_indices // 2`
         # shows which anchors are considered end points
@@ -1122,8 +1115,8 @@ class VMobject(Mobject):
         ]
         # Remove null triangles, coming from adjascent points
         iti = inner_tri_indices
-        null1 = (iti[0::3] + 1 == iti[1::3]) & (iti[0::3] + 2 == iti[2::3])
-        null2 = (iti[0::3] - 1 == iti[1::3]) & (iti[0::3] - 2 == iti[2::3])
+        null1 = (iti[::3] + 1 == iti[1::3]) & (iti[::3] + 2 == iti[2::3])
+        null2 = (iti[::3] - 1 == iti[1::3]) & (iti[::3] - 2 == iti[2::3])
         inner_tri_indices = iti[~(null1 | null2).repeat(3)]
 
         ovi = self.get_outer_vert_indices()
@@ -1157,7 +1150,7 @@ class VMobject(Mobject):
             return self.data["joint_product"]
 
         # Find all the unit tangent vectors at each joint
-        a0, h, a1 = points[0:-1:2], points[1::2], points[2::2]
+        a0, h, a1 = points[:-1:2], points[1::2], points[2::2]
         a0_to_h = h - a0
         h_to_a1 = a1 - h
 
@@ -1166,7 +1159,7 @@ class VMobject(Mobject):
 
         vect_to_vert[1::2] = a0_to_h
         vect_to_vert[2::2] = h_to_a1
-        vect_from_vert[0:-1:2] = a0_to_h
+        vect_from_vert[:-1:2] = a0_to_h
         vect_from_vert[1::2] = h_to_a1
 
         # Joint up closed loops, or mark unclosed paths as such

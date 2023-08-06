@@ -270,8 +270,7 @@ class LinearNumberSlider(ControlMobject):
         prop = get_norm(point_on_line - start) / get_norm(end - start)
         value = self.min_value + prop * (self.max_value - self.min_value)
         no_of_steps = int((value - self.min_value) / self.step)
-        value_nearest_to_step = self.min_value + no_of_steps * self.step
-        return value_nearest_to_step
+        return self.min_value + no_of_steps * self.step
 
 
 class ColorSliders(Group):

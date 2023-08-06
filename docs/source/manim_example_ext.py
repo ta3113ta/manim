@@ -35,18 +35,16 @@ class ManimExampleDirective(Directive):
         source_block = [
             ".. code-block:: python",
             "",
-            *["    " + line for line in self.content],
+            *[f"    {line}" for line in self.content],
         ]
         source_block = "\n".join(source_block)
 
         state_machine = self.state_machine
         document = state_machine.document
 
-        if any(media_file_name.endswith(ext) for ext in [".png", ".jpg", ".gif"]):
-            is_video = False
-        else:
-            is_video = True
-
+        is_video = not any(
+            media_file_name.endswith(ext) for ext in [".png", ".jpg", ".gif"]
+        )
         rendered_template = jinja2.Template(TEMPLATE).render(
             scene_name=scene_name,
             scene_name_lowercase=scene_name.lower(),
@@ -71,8 +69,7 @@ def setup(app):
 
     app.add_directive("manim-example", ManimExampleDirective)
 
-    metadata = {"parallel_read_safe": False, "parallel_write_safe": True}
-    return metadata
+    return {"parallel_read_safe": False, "parallel_write_safe": True}
 
 
 TEMPLATE = r"""

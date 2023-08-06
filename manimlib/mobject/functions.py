@@ -42,7 +42,7 @@ class ParametricCurve(VMobject):
         jumps = jumps[(jumps > t_min) & (jumps < t_max)]
         boundary_times = [t_min, t_max, *(jumps - self.epsilon), *(jumps + self.epsilon)]
         boundary_times.sort()
-        for t1, t2 in zip(boundary_times[0::2], boundary_times[1::2]):
+        for t1, t2 in zip(boundary_times[::2], boundary_times[1::2]):
             t_range = [*np.arange(t1, t2, step), t2]
             points = np.array([self.t_func(t) for t in t_range])
             self.start_new_path(points[0])

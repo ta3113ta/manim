@@ -153,7 +153,7 @@ class StringMobject(SVGMobject, ABC):
         The correctness cannot be ensured, since the svg may
         change significantly after inserting color commands.
         """
-        if len(labelled_submobs) == 0:
+        if not labelled_submobs:
             return
 
         labelled_svg = VGroup(*labelled_submobs)
@@ -223,9 +223,7 @@ class StringMobject(SVGMobject, ABC):
                     return configured_items[i][0]
                 if category == 1:
                     return isolated_spans[i]
-                if category == 2:
-                    return protected_spans[i]
-                return command_matches[i].span()
+                return protected_spans[i] if category == 2 else command_matches[i].span()
 
             index, paired_index = get_span_by_category(category, i)[::flag]
             return (
@@ -295,9 +293,9 @@ class StringMobject(SVGMobject, ABC):
                 ))
                 continue
             span, attr_dict = configured_items[i] \
-                if category == 0 else (isolated_spans[i], {})
+                    if category == 0 else (isolated_spans[i], {})
             pos, category_, i_, protect_level_, bracket_stack_ \
-                = open_stack.pop()
+                    = open_stack.pop()
             if category_ != category or i_ != i:
                 overlapping_spans.append(span)
                 continue

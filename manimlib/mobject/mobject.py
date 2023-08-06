@@ -105,7 +105,7 @@ class Mobject(object):
         self.bounding_box: Vect3Array = np.zeros((3, 3))
         self._shaders_initialized: bool = False
         self._data_has_changed: bool = True
-        self.shader_code_replacements: dict[str, str] = dict()
+        self.shader_code_replacements: dict[str, str] = {}
 
         self.init_data()
         self._data_defaults = np.ones(1, dtype=self.data.dtype)
@@ -241,8 +241,7 @@ class Mobject(object):
         for mob in self.get_family():
             arrs = []
             if mob.has_points():
-                for key in mob.pointlike_data_keys:
-                    arrs.append(mob.data[key])
+                arrs.extend(mob.data[key] for key in mob.pointlike_data_keys)
             if works_on_bounding_box:
                 arrs.append(mob.get_bounding_box())
 
@@ -301,12 +300,11 @@ class Mobject(object):
         ])
         if len(all_points) == 0:
             return np.zeros((3, self.dim))
-        else:
-            # Lower left and upper right corners
-            mins = all_points.min(0)
-            maxs = all_points.max(0)
-            mids = (mins + maxs) / 2
-            return np.array([mins, mids, maxs])
+        # Lower left and upper right corners
+        mins = all_points.min(0)
+        maxs = all_points.max(0)
+        mids = (mins + maxs) / 2
+        return np.array([mins, mids, maxs])
 
     def refresh_bounding_box(
         self,
@@ -373,10 +371,7 @@ class Mobject(object):
         return self
 
     def get_family(self, recurse: bool = True) -> list[Self]:
-        if recurse:
-            return self.family
-        else:
-            return [self]
+        return self.family if recurse else [self]
 
     def family_members_with_points(self) -> list[Self]:
         return [m for m in self.family if len(m.data) > 0]
@@ -514,8 +509,8 @@ class Mobject(object):
             if v_buff is None:
                 v_buff = v_buff_ratio * self[0].get_height()
 
-        x_unit = h_buff + max([sm.get_width() for sm in submobs])
-        y_unit = v_buff + max([sm.get_height() for sm in submobs])
+        x_unit = h_buff + max(sm.get_width() for sm in submobs)
+        y_unit = v_buff + max(sm.get_height() for sm in submobs)
 
         for index, sm in enumerate(submobs):
             if fill_rows_first:
@@ -583,7 +578,7 @@ class Mobject(object):
         @wraps(func)
         def wrapper(self, *args, **kwargs):
             uncopied_attrs = ["parents", "target", "saved_state"]
-            stash = dict()
+            stash = {}
             for attr in uncopied_attrs:
                 if hasattr(self, attr):
                     value = getattr(self, attr)
@@ -593,6 +588,7 @@ class Mobject(object):
             result = func(self, *args, **kwargs)
             self.__dict__.update(stash)
             return result
+
         return wrapper
 
     @stash_mobject_pointers
@@ -715,7 +711,7 @@ class Mobject(object):
         for m1, m2 in zip(fam1, fam2):
             if m1.get_num_points() != m2.get_num_points():
                 return False
-            if not m1.data.dtype == m2.data.dtype:
+            if m1.data.dtype != m2.data.dtype:
                 return False
             for key in m1.data.dtype.names:
                 if not np.isclose(m1.data[key], m2.data[key]).all():
@@ -725,7 +721,11 @@ class Mobject(object):
             for key in m1.uniforms:
                 value1 = m1.uniforms[key]
                 value2 = m2.uniforms[key]
-                if isinstance(value1, np.ndarray) and isinstance(value2, np.ndarray) and not value1.size == value2.size:
+                if (
+                    isinstance(value1, np.ndarray)
+                    and isinstance(value2, np.ndarray)
+                    and value1.size != value2.size
+                ):
                     return False
                 if not np.isclose(value1, value2).all():
                     return False
@@ -963,7 +963,7 @@ class Mobject(object):
 
     def apply_function(self, function: Callable[[np.ndarray], np.ndarray], **kwargs) -> Self:
         # Default to applying matrix about the origin, not mobjects center
-        if len(kwargs) == 0:
+        if not kwargs:
             kwargs["about_point"] = ORIGIN
         self.apply_points_function(
             lambda points: np.array([function(p) for p in points]),
@@ -1109,9 +1109,7 @@ class Mobject(object):
             return True
         if self.get_bottom()[1] > FRAME_Y_RADIUS:
             return True
-        if self.get_top()[1] < -FRAME_Y_RADIUS:
-            return True
-        return False
+        return self.get_top()[1] < -FRAME_Y_RADIUS
 
     def stretch_about_point(self, factor: float, dim: int, point: Vect3) -> Self:
         return self.stretch(factor, dim, about_point=point)
@@ -1330,7 +1328,7 @@ class Mobject(object):
             data = mob.data if mob.has_points() > 0 else mob._data_defaults
             if color is not None:
                 rgbs = np.array(list(map(color_to_rgb, listify(color))))
-                if 1 < len(rgbs):
+                if len(rgbs) > 1:
                     rgbs = resize_with_interpolation(rgbs, len(data))
                 data[name][:, :3] = rgbs
             if opacity is not None:
@@ -1378,7 +1376,7 @@ class Mobject(object):
         return self
 
     def set_submobject_colors_by_gradient(self, *colors: ManimColor) -> Self:
-        if len(colors) == 0:
+        if not colors:
             raise Exception("Need at least one color")
         elif len(colors) == 1:
             return self.set_color(*colors)
@@ -1730,10 +1728,7 @@ class Mobject(object):
             # If empty, simply add n point mobjects
             null_mob = self.copy()
             null_mob.set_points([self.get_center()])
-            self.set_submobjects([
-                null_mob.copy()
-                for k in range(n)
-            ])
+            self.set_submobjects([null_mob.copy() for _ in range(n)])
             return self
         target = curr + n
         repeat_indices = (np.arange(target) * curr) // target
@@ -1744,8 +1739,7 @@ class Mobject(object):
         new_submobs = []
         for submob, sf in zip(self.submobjects, split_factors):
             new_submobs.append(submob)
-            for k in range(1, sf):
-                new_submobs.append(submob.invisible_copy())
+            new_submobs.extend(submob.invisible_copy() for _ in range(1, sf))
         self.set_submobjects(new_submobs)
         return self
 
@@ -1835,14 +1829,12 @@ class Mobject(object):
                 key for key in self.uniforms
                 if all(listify(mobject1.uniforms.get(key, 0) == mobject2.uniforms.get(key, 0)))
             )
-            sm.const_data_keys = set(
-                key for key in sm.data.dtype.names
+            sm.const_data_keys = {
+                key
+                for key in sm.data.dtype.names
                 if key not in sm.locked_data_keys
-                if all(
-                    array_is_constant(mob.data[key])
-                    for mob in (sm, sm1, sm2)
-                )
-            )
+                if all(array_is_constant(mob.data[key]) for mob in (sm, sm1, sm2))
+            }
 
         return self
 
@@ -1931,15 +1923,10 @@ class Mobject(object):
         # TODO, add a version of this which changes the point data instead
         # of the shader code
         for char in "xyz":
-            glsl_snippet = glsl_snippet.replace(char, "point." + char)
+            glsl_snippet = glsl_snippet.replace(char, f"point.{char}")
         rgb_list = get_colormap_list(colormap)
         self.set_color_by_code(
-            "color.rgb = float_to_color({}, {}, {}, {});".format(
-                glsl_snippet,
-                float(min_value),
-                float(max_value),
-                get_colormap_code(rgb_list)
-            )
+            f"color.rgb = float_to_color({glsl_snippet}, {min_value}, {max_value}, {get_colormap_code(rgb_list)});"
         )
         return self
 
@@ -2119,7 +2106,7 @@ class Mobject(object):
 
 class Group(Mobject):
     def __init__(self, *mobjects: Mobject, **kwargs):
-        if not all([isinstance(m, Mobject) for m in mobjects]):
+        if not all(isinstance(m, Mobject) for m in mobjects):
             raise Exception("All submobjects must be of type Mobject")
         Mobject.__init__(self, **kwargs)
         self.add(*mobjects)

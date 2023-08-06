@@ -308,7 +308,7 @@ class InteractiveScene(Scene):
             lambda m: m not in self.unselectables and m not in self.selection,
             mobjects
         ))
-        if len(mobs) == 0:
+        if not mobs:
             return
         self.selection.add(*mobs)
         for mob in mobs:
@@ -347,7 +347,7 @@ class InteractiveScene(Scene):
         names = []
         shell = get_ipython()
         for mob in self.selection:
-            name = str(id(mob))
+            name = id(mob)
             if shell is None:
                 continue
             for key, value in shell.user_ns.items():
@@ -621,8 +621,7 @@ class InteractiveScene(Scene):
         height = frame.get_height()
         angles = frame.get_euler_angles()
 
-        call = f"self.frame.animate.reorient"
-        call += str(tuple((angles / DEGREES).astype(int)))
+        call = f"self.frame.animate.reorient{tuple((angles / DEGREES).astype(int))}"
         if any(center != 0):
             call += f".move_to({list(np.round(center, 2))})"
         if height != FRAME_HEIGHT:

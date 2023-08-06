@@ -242,7 +242,7 @@ def get_module_with_inserted_embed_line(
 
     prev_line_num = -1
     n_spaces = None
-    if len(line_marker) == 0:
+    if not line_marker:
         # Find the end of the construct method
         in_construct = False
         for index in range(scene_line_number, len(lines) - 1):
@@ -259,7 +259,7 @@ def get_module_with_inserted_embed_line(
     elif line_marker.isdigit():
         # Treat the argument as a line number
         prev_line_num = int(line_marker) - 1
-    elif len(line_marker) > 0:
+    else:
         # Treat the argument as a string
         try:
             prev_line_num = next(
@@ -368,12 +368,11 @@ def init_global_config(config_file):
 
 def get_file_ext(args: Namespace) -> str:
     if args.transparent:
-        file_ext = ".mov"
+        return ".mov"
     elif args.gif:
-        file_ext = ".gif"
+        return ".gif"
     else:
-        file_ext = ".mp4"
-    return file_ext
+        return ".mp4"
 
 
 def get_animations_numbers(args: Namespace) -> tuple[int | None, int | None]:
@@ -445,7 +444,6 @@ def get_window_config(args: Namespace, custom_config: dict, camera_config: dict)
 
 
 def get_camera_config(args: Namespace, custom_config: dict) -> dict:
-    camera_config = {}
     camera_resolutions = custom_config["camera_resolutions"]
     if args.resolution:
         resolution = args.resolution
@@ -460,24 +458,19 @@ def get_camera_config(args: Namespace, custom_config: dict) -> dict:
     else:
         resolution = camera_resolutions[camera_resolutions["default_resolution"]]
 
-    if args.fps:
-        fps = int(args.fps)
-    else:
-        fps = custom_config["fps"]
-
+    fps = int(args.fps) if args.fps else custom_config["fps"]
     width_str, height_str = resolution.split("x")
     width = int(width_str)
     height = int(height_str)
 
-    camera_config.update({
+    camera_config = {} | {
         "pixel_width": width,
         "pixel_height": height,
         "frame_config": {
             "frame_shape": ((width / height) * FRAME_HEIGHT, FRAME_HEIGHT),
         },
         "fps": fps,
-    })
-
+    }
     try:
         bg_color = args.color or custom_config["style"]["background_color"]
         camera_config["background_color"] = colour.Color(bg_color)

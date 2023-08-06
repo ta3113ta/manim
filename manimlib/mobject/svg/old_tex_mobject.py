@@ -78,10 +78,9 @@ class SingleStringTex(SVGMobject):
 
     def get_file_path(self) -> str:
         content = self.get_tex_file_body(self.tex_string)
-        file_path = tex_content_to_svg_file(
+        return tex_content_to_svg_file(
             content, self.template, self.additional_preamble, self.tex_string
         )
-        return file_path
 
     def get_tex_file_body(self, tex_string: str) -> str:
         new_tex = self.get_modified_expression(tex_string)
@@ -125,7 +124,7 @@ class SingleStringTex(SVGMobject):
         if tex == "\\substack":
             tex = "\\quad"
 
-        if tex == "":
+        if not tex:
             tex = "\\quad"
 
         # To keep files from starting with a line break
@@ -209,12 +208,9 @@ class OldTex(SingleStringTex):
     def break_up_tex_strings(self, tex_strings: Iterable[str], substrings_to_isolate: List[str] = []) -> Iterable[str]:
         # Separate out any strings specified in the isolate
         # or tex_to_color_map lists.
-        if len(substrings_to_isolate) == 0:
+        if not substrings_to_isolate:
             return tex_strings
-        patterns = (
-            "({})".format(re.escape(ss))
-            for ss in substrings_to_isolate
-        )
+        patterns = (f"({re.escape(ss)})" for ss in substrings_to_isolate)
         pattern = "|".join(patterns)
         pieces = []
         for s in tex_strings:
@@ -261,10 +257,7 @@ class OldTex(SingleStringTex):
             if not case_sensitive:
                 tex1 = tex1.lower()
                 tex2 = tex2.lower()
-            if substring:
-                return tex1 in tex2
-            else:
-                return tex1 == tex2
+            return tex1 in tex2 if substring else tex1 == tex2
 
         return VGroup(*filter(
             lambda m: isinstance(m, SingleStringTex) and test(tex, m.get_tex()),
@@ -308,9 +301,8 @@ class OldTex(SingleStringTex):
 
         if stop_tex is None:
             return self[start_index:]
-        else:
-            stop_index = self.index_of_part_by_tex(stop_tex, start=start_index, **kwargs)
-            return self[start_index:stop_index]
+        stop_index = self.index_of_part_by_tex(stop_tex, start=start_index, **kwargs)
+        return self[start_index:stop_index]
 
     def sort_alphabetically(self) -> None:
         self.submobjects.sort(key=lambda m: m.get_tex())

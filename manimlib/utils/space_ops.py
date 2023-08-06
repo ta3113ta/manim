@@ -69,7 +69,7 @@ def quaternion_mult(*quats: Vect4) -> Vect4:
     Inputs are treated as quaternions, where the real part is the
     last entry, so as to follow the scipy Rotation conventions.
     """
-    if len(quats) == 0:
+    if not quats:
         return np.array([0, 0, 0, 1])
     result = np.array(quats[0])
     for next_quat in quats[1:]:
@@ -215,9 +215,7 @@ def get_unit_normal(
         # Vectors align, so find a normal to them in the plane shared with the z-axis
         new_cp = cross(cross(v1, OUT), v1)
         new_cp_norm = get_norm(new_cp)
-        if new_cp_norm < tol:
-            return DOWN
-        return new_cp / new_cp_norm
+        return DOWN if new_cp_norm < tol else new_cp / new_cp_norm
     return cp / cp_norm
 
 
@@ -350,10 +348,8 @@ def get_closest_point_on_line(a: VectN, b: VectN, p: VectN) -> VectN:
     """
     # x = b + t*(a-b) = t*a + (1-t)*b
     t = np.dot(p - b, a - b) / np.dot(a - b, a - b)
-    if t < 0:
-        t = 0
-    if t > 1:
-        t = 1
+    t = max(t, 0)
+    t = min(t, 1)
     return ((t * a) + ((1 - t) * b))
 
 
